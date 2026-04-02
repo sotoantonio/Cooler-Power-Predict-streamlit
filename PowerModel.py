@@ -10,7 +10,7 @@ import streamlit as st
 
 # Use the direct asset URL, not the release page URL.
 # Replace OWNER, REPO, TAG, and FILE_NAME with your real release values.
-MODEL_URL = "https://github.com/sotoantonio/Cooler-Power-Predict-streamlit/releases/download/v1.0.0/ml_power_model_1.pkl"
+MODEL_URL = "https://github.com/sotoantonio/Cooler-Power-Predict-streamlit/releases/download/V.1.0.0/ml_power_model_1.pkl"
 MODEL_PATH = Path(__file__).with_name("ml_power_model_1.pkl")
 
 def download_model():
