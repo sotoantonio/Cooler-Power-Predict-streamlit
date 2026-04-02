@@ -1,25 +1,37 @@
-#streamlit app file
-import streamlit as st
-import numpy as np
+# streamlit app file
+from pathlib import Path
 import joblib
+import numpy as np
 import pandas as pd
 import requests
+import streamlit as st
+import joblib
 
-url= "https://drive.google.com/uc?export=download&id=1eIZGPVBif2YciB3MBGsoB--gd8Hw6UEu"
+MODEL_URL = "https://github.com/sotoantonio/Cooler-Power-Predict-streamlit/releases/tag/V.1.0.0/ml_power_model_1.pkl"
+MODEL_PATH = Path("ml_power_model_1.pkl")
+
+def download_model():
+    if MODEL_PATH.exists():
+        return
+
+    response = requests.get(MODEL_URL, timeout=60)
+    response.raise_for_status()
+    MODEL_PATH.write_bytes(response.content)
+
 
 @st.cache_resource
 def load_model():
-    response = requests.get(url)
-    with open("model.pkl", "wb") as f:
-        f.write(response.content)
-    return joblib.load("model.pkl")
+    download_model()
+    return joblib.load(MODEL_PATH)
 
-model = load_model()
+
+try:
+    model = load_model()
+except Exception as exc:
+    st.error(f"Failed to load the model from the GitHub release asset: {exc}")
+    st.stop()
 
 st.title("Cooling System Power Simulator")
-
-# Load trained model
-model = joblib.load("ml_power_model_1.pkl")
 st.sidebar.header("System Controls")
 # --- Inputs ---
 fan1 = st.sidebar.slider("Tower Fan 1", 0.0, 100.0, 50.0)
