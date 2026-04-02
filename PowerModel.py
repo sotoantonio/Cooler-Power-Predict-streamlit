@@ -14,9 +14,6 @@ MODEL_URL = "https://github.com/sotoantonio/Cooler-Power-Predict-streamlit/relea
 MODEL_PATH = Path(__file__).with_name("ml_power_model_1.pkl")
 
 def download_model():
-    if MODEL_PATH.exists():
-        return
-
     response = requests.get(MODEL_URL, timeout=60)
     response.raise_for_status()
 
@@ -27,11 +24,23 @@ def download_model():
             "Use the GitHub release asset download URL that contains /releases/download/."
         )
 
-    MODEL_PATH.write_bytes(response.content)
+    model_bytes = response.content
+    if len(model_bytes) < 1024:
+        raise ValueError("Downloaded model file is unexpectedly small. Check the release asset URL.")
+
+    MODEL_PATH.write_bytes(model_bytes)
 
 
 @st.cache_resource
 def load_model():
+    # First try local file if it already exists.
+    if MODEL_PATH.exists():
+        try:
+            return joblib.load(MODEL_PATH)
+        except Exception:
+            # Remove corrupted/stale file and fetch a clean copy.
+            MODEL_PATH.unlink(missing_ok=True)
+
     download_model()
     return joblib.load(MODEL_PATH)
 
@@ -39,7 +48,10 @@ def load_model():
 try:
     model = load_model()
 except Exception as exc:
-    st.error(f"Failed to load the model from the GitHub release asset: {exc}")
+    st.error(
+        f"Failed to load the model from the GitHub release asset: "
+        f"{type(exc).__name__}: {exc}"
+    )
     st.caption(f"Checked URL: {MODEL_URL}")
     st.stop()
 
