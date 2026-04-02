@@ -1,14 +1,17 @@
 # streamlit app file
 from pathlib import Path
+
 import joblib
 import numpy as np
 import pandas as pd
 import requests
 import streamlit as st
-import joblib
 
-MODEL_URL = "https://github.com/sotoantonio/Cooler-Power-Predict-streamlit/releases/tag/V.1.0.0/ml_power_model_1.pkl"
-MODEL_PATH = Path("ml_power_model_1.pkl")
+
+# Use the direct asset URL, not the release page URL.
+# Replace OWNER, REPO, TAG, and FILE_NAME with your real release values.
+MODEL_URL = "https://github.com/sotoantonio/Cooler-Power-Predict-streamlit/releases/download/v1.0.0/ml_power_model_1.pkl"
+MODEL_PATH = Path(__file__).with_name("ml_power_model_1.pkl")
 
 def download_model():
     if MODEL_PATH.exists():
@@ -16,6 +19,14 @@ def download_model():
 
     response = requests.get(MODEL_URL, timeout=60)
     response.raise_for_status()
+
+    content_type = response.headers.get("content-type", "").lower()
+    if "text/html" in content_type:
+        raise ValueError(
+            "The model URL returned HTML instead of the pickle file. "
+            "Use the GitHub release asset download URL that contains /releases/download/."
+        )
+
     MODEL_PATH.write_bytes(response.content)
 
 
@@ -29,6 +40,7 @@ try:
     model = load_model()
 except Exception as exc:
     st.error(f"Failed to load the model from the GitHub release asset: {exc}")
+    st.caption(f"Checked URL: {MODEL_URL}")
     st.stop()
 
 st.title("Cooling System Power Simulator")
